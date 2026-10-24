@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0718">
+<title>🎂 周五，生日快乐</title>
+<style>
+  :root{
+    --bg0:#0a0616; --bg1:#180d33; --bg2:#2b1244;
+    --gold:#ffc861; --coral:#ff7f9e; --mint:#7defca; --lav:#b79bff;
+    --ink:#fff4fa; --dim:#c9b4e8;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+    --safe-t: env(safe-area-inset-top, 0px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB",
+      "Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    background:
+      radial-gradient(1100px 620px at 18% 6%, #40265f 0%, transparent 58%),
+      radial-gradient(900px 620px at 86% 88%, #5a1f4d 0%, transparent 60%),
+      linear-gradient(165deg,var(--bg0) 0%, var(--bg1) 48%, #0d0820 100%);
+    color:var(--ink);
+    overflow-x:hidden;
+    touch-action:manipulation;
+    -webkit-font-smoothing:antialiased;
+    -webkit-text-size-adjust:100%;
+  }
+  ::selection{background:var(--coral);color:#fff}
+  ::-webkit-scrollbar{width:8px}
+  ::-webkit-scrollbar-thumb{background:rgba(255,200,97,.35);border-radius:4px}
+
+  canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+  #bg{z-index:0}
+  #fx{z-index:60;pointer-events:none}
+  .grain{
+    position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  .float-layer{position:fixed;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+
+  .wrap{
+    position:relative;z-index:20;
+    min-height:100vh; min-height:100svh;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:calc(28px + var(--safe-t)) 18px calc(110px + var(--safe-b));
+    text-align:center;
+  }
+
+  /* ---------- 顶部标签 ---------- */
+  .pill{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:7px 16px;border-radius:999px;font-size:13px;letter-spacing:1.5px;
+    color:var(--gold);background:rgba(255,200,97,.09);
+    box-shadow:inset 0 0 0 1px rgba(255,200,97,.3);
+  }
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--coral);
+    box-shadow:0 0 10px var(--coral);animation:beat 1.4s ease-in-out infinite}
+  @keyframes beat{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.9);opacity:.6}}
+
+  /* ---------- 标题 ---------- */
+  .title{
+    margin-top:18px;
+    font-size:clamp(38px,12.5vw,104px);font-weight:900;line-height:1.02;letter-spacing:-.5px;
+    background:linear-gradient(178deg,#fffdfa 6%,#ffd98a 46%,#ff8fab 96%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    filter:drop-shadow(0 10px 34px rgba(255,126,158,.4));
+  }
+  .title span{display:inline-block;animation:float 3.4s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+  /* ---------- 名字 ---------- */
+  .hero{margin-top:10px;display:flex;align-items:center;gap:14px}
+  .line{width:clamp(28px,10vw,80px);height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,200,97,.85))}
+  .hero .line:last-child{background:linear-gradient(90deg,rgba(255,200,97,.85),transparent)}
+  .name{
+    font-size:clamp(34px,11vw,72px);font-weight:900;letter-spacing:6px;
+    color:#fff;outline:none;cursor:text;
+    text-shadow:0 0 26px rgba(255,200,97,.55),0 0 70px rgba(255,127,158,.35);
+  }
+  .name:hover{background:rgba(255,200,97,.1);border-radius:10px}
+  .sub{margin-top:12px;font-size:clamp(13px,3.4vw,17px);color:var(--dim);letter-spacing:1.2px}
+
+  /* ---------- 打字机 ---------- */
+  .type{
+    margin-top:20px;min-height:1.8em;font-size:clamp(15px,4.2vw,21px);color:#ffe6f2;
+    letter-spacing:1px;text-shadow:0 0 20px rgba(255,127,158,.45);
+    padding:0 6px;
+  }
+  .caret{display:inline-block;width:2px;height:1em;background:var(--coral);
+    vertical-align:-2px;margin-left:3px;animation:blink .8s steps(1) infinite}
+  @keyframes blink{50%{opacity:0}}
+
+  /* ---------- 蛋糕 ---------- */
+  .cake-zone{margin:26px 0 0;cursor:pointer;user-select:none;-webkit-user-select:none;position:relative}
+  .cake{width:clamp(220px,62vw,300px);transition:transform .25s}
+  .cake:hover{transform:translateY(-6px) scale(1.03)}
+  #flame{
+    transform-box:fill-box;transform-origin:50% 100%;
+    animation:flick .3s infinite alternate;
+    transition:opacity .45s ease, transform .45s ease;
+  }
+  @keyframes flick{
+    0%{transform:scale(1,1) rotate(-4deg)}
+    100%{transform:scale(.86,1.16) rotate(5deg)}
+  }
+  #flame.out{animation:none;opacity:0;transform:scale(.14)}
+  #glow{animation:breathe 1.6s ease-in-out infinite;transition:opacity .5s ease}
+  @keyframes breathe{0%,100%{opacity:.75}50%{opacity:.35}}
+  #glow.out{animation:none;opacity:0}
+  .wish{margin-top:6px;font-size:clamp(14px,3.8vw,18px);color:var(--gold);
+    opacity:0;transform:translateY(6px);transition:.5s}
+  .wish.on{opacity:1;transform:translateY(0)}
+  .hint{margin-top:8px;font-size:12px;color:#a893cf;letter-spacing:.5px}
+
+  /* ---------- 贺卡 ---------- */
+  .card{
+    position:relative;margin-top:34px;width:min(560px,100%);padding:26px 22px;border-radius:22px;
+    background:linear-gradient(150deg,rgba(255,255,255,.13),rgba(255,255,255,.045));
+    border:1px solid rgba(255,255,255,.16);
+    box-shadow:0 26px 66px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18);
+    transform-style:preserve-3d;transition:transform .12s ease-out;
+  }
+  @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .card{-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+  }
+  .card::before{
+    content:"";position:absolute;left:50%;top:-40%;transform:translateX(-50%);
+    width:120%;height:80%;border-radius:50%;pointer-events:none;
+    background:radial-gradient(ellipse at center, rgba(255,200,97,.18), transparent 65%);
+  }
+  .card h3{font-size:18px;color:var(--gold);margin-bottom:12px;letter-spacing:1px;transform:translateZ(26px)}
+  .card p{font-size:clamp(14px,3.7vw,16px);line-height:2;color:#f3e6ff;transform:translateZ(14px)}
+  .sign{margin-top:14px;text-align:right;font-size:13px;color:#cdb8ee;transform:translateZ(18px)}
+
+  /* ---------- 按钮 ---------- */
+  .btns{margin-top:28px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .btn{
+    min-height:46px;padding:13px 24px;border:none;border-radius:999px;cursor:pointer;
+    font-size:15px;font-weight:800;color:#3d1030;letter-spacing:.5px;
+    background:linear-gradient(120deg,#ffd98a,#ff8fab);
+    box-shadow:0 12px 28px rgba(255,127,158,.4);transition:.2s;
+  }
+  .btn:hover{transform:translateY(-3px);box-shadow:0 18px 34px rgba(255,127,158,.55)}
+  .btn:active{transform:translateY(0) scale(.97)}
+  .btn.ghost{background:rgba(255,255,255,.1);color:#ffe9f7;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+
+  /* ---------- 特效面板（桌面右上 / 手机底部抽屉） ---------- */
+  .panel{
+    position:fixed;right:16px;top:16px;z-index:70;width:216px;
+    border-radius:18px;overflow:hidden;
+    background:rgba(20,12,42,.82);border:1px solid rgba(255,255,255,.16);
+    box-shadow:0 20px 46px rgba(0,0,0,.5);
+  }
+  @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+    .panel{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+  }
+  .panel-head{
+    padding:12px 15px;font-size:14px;font-weight:800;cursor:pointer;color:var(--gold);
+    display:flex;justify-content:space-between;align-items:center;user-select:none;
+  }
+  .panel-body{
+    display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 10px 10px;
+    max-height:min(58vh,420px);overflow:auto;
+  }
+  .panel.min .panel-body{display:none}
+  .fx-btn{
+    padding:9px 4px;font-size:12px;border:none;border-radius:11px;cursor:pointer;
+    background:rgba(255,255,255,.08);color:#efe0ff;transition:.18s;line-height:1.4;
+  }
+  .fx-btn:hover{background:rgba(255,255,255,.18)}
+  .fx-btn.on{background:linear-gradient(120deg,#ffd98a,#ff7f9e);color:#3d1030;font-weight:800}
+  .fx-btn i{display:block;font-style:normal;font-size:16px}
+
+  /* ---------- 气球 / 爱心 ---------- */
+  .balloon{
+    position:absolute;border-radius:50% 50% 46% 46%;
+    cursor:pointer;pointer-events:auto;
+    box-shadow:inset -7px -11px 16px rgba(0,0,0,.24), 0 8px 20px rgba(0,0,0,.3);
+  }
+  .balloon::after{content:"";position:absolute;left:50%;bottom:-24px;transform:translateX(-50%);
+    width:1.5px;height:24px;background:rgba(255,255,255,.4)}
+  .balloon.burst{animation:burst .26s forwards}
+  @keyframes burst{to{transform:scale(1.8);opacity:0}}
+  .shard{position:absolute;width:7px;height:7px;border-radius:2px;pointer-events:none}
+
+  .heart{position:absolute;pointer-events:none;animation:rise linear forwards;
+    filter:drop-shadow(0 0 10px rgba(255,120,160,.65))}
+  @keyframes rise{
+    0%{transform:translateY(0) scale(.35) rotate(0);opacity:0}
+    12%{opacity:1}
+    100%{transform:translateY(-95vh) scale(1.2) rotate(var(--r,20deg));opacity:0}
+  }
+
+  /* ---------- 音乐律动条 ---------- */
+  .viz{
+    position:fixed;left:50%;bottom:calc(6px + var(--safe-b));transform:translateX(-50%);
+    z-index:55;display:flex;align-items:flex-end;gap:4px;height:62px;padding:0 6px;
+    opacity:0;transition:opacity .4s;pointer-events:none;
+  }
+  .viz.on{opacity:1}
+  .viz i{display:block;width:5px;height:5px;border-radius:3px;
+    background:linear-gradient(#7defca,#ffc861 55%,#ff7f9e);transition:height .08s linear}
+
+  /* ---------- 进场动画 ---------- */
+  .up{opacity:0;transform:translateY(22px);animation:up .9s cubic-bezier(.2,.8,.25,1) forwards}
+  @keyframes up{to{opacity:1;transform:none}}
+  .d1{animation-delay:.15s}.d2{animation-delay:.35s}.d3{animation-delay:.55s}
+  .d4{animation-delay:.75s}.d5{animation-delay:.95s}
+
+  /* ---------- 手机端 ---------- */
+  @media (max-width:768px){
+    .wrap{padding:calc(20px + var(--safe-t)) 14px calc(96px + var(--safe-b));gap:0}
+    .title{letter-spacing:0}
+    .hero{gap:10px}
+    .name{letter-spacing:3px}
+    .card{padding:22px 18px;border-radius:20px}
+    .card p{line-height:1.95}
+    .btns{width:100%;gap:10px}
+    .btn{flex:1 1 140px;min-width:140px;padding:13px 14px;font-size:14.5px}
+    /* 面板变底部抽屉 */
+    .panel{
+      right:10px;left:10px;top:auto;bottom:calc(10px + var(--safe-b));
+      width:auto;border-radius:20px;
+    }
+    .panel-head{padding:13px 16px;font-size:13.5px}
+    .panel-body{grid-template-columns:repeat(4,1fr);gap:6px;padding:0 10px 12px;max-height:44vh}
+    .fx-btn{padding:8px 2px;font-size:11px;border-radius:12px}
+    .fx-btn i{font-size:15px}
+    .viz{height:46px;gap:3px}
+    .viz i{width:4px}
+    .hint{font-size:11px}
+  }
+  @media (max-width:360px){
+    .panel-body{grid-template-columns:repeat(3,1fr)}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001s !important;animation-iteration-count:1 !important}
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="grain"></div>
+<canvas id="fx"></canvas>
+<div class="float-layer" id="layer"></div>
+
+<div class="panel" id="panel">
+  <div class="panel-head" id="panelHead"><span>✨ 10 个 JS 特效</span><span id="panelArrow">−</span></div>
+  <div class="panel-body" id="panelBody">
+    <button class="fx-btn" data-fx="firework"><i>🎆</i>烟花绽放</button>
+    <button class="fx-btn" data-fx="confetti"><i>🎊</i>彩纸雨</button>
+    <button class="fx-btn" data-fx="meteor"><i>🌠</i>流星划过</button>
+    <button class="fx-btn" data-fx="trail"><i>💫</i>鼠标星轨</button>
+    <button class="fx-btn" data-fx="ripple"><i>🫧</i>点击涟漪</button>
+    <button class="fx-btn" data-fx="balloon"><i>🎈</i>放飞气球</button>
+    <button class="fx-btn" data-fx="heart"><i>💗</i>爱心飘飘</button>
+    <button class="fx-btn" data-fx="type"><i>✍️</i>打字祝福</button>
+    <button class="fx-btn" data-fx="candle"><i>🕯️</i>吹灭蜡烛</button>
+    <button class="fx-btn" data-fx="song"><i>🎵</i>生日歌</button>
+  </div>
+</div>
+
+<main class="wrap">
+  <div class="pill up"><span class="dot"></span>10.25 · 今日寿星</div>
+  <h1 class="title up d1" id="title">Happy Birthday</h1>
+  <div class="hero up d2">
+    <span class="line"></span>
+    <span class="name" id="name" contenteditable="true" spellcheck="false">周五</span>
+    <span class="line"></span>
+  </div>
+  <div class="sub up d2">全世界都在等周五，而我在等你的生日</div>
+  <div class="type up d3" id="type"><span id="typeText"></span><span class="caret"></span></div>
+
+  <div class="cake-zone up d3" id="cakeZone" title="点我吹蜡烛">
+    <svg class="cake" viewBox="0 0 320 300" aria-label="生日蛋糕">
+      <defs>
+        <linearGradient id="gC" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#ff9ec1"/><stop offset=".5" stop-color="#fff2f8"/>
+          <stop offset="1" stop-color="#ffb3cd"/>
+        </linearGradient>
+        <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fff0f7"/><stop offset="1" stop-color="#ffc0d8"/>
+        </linearGradient>
+        <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffd2e5"/><stop offset="1" stop-color="#ff9dc0"/>
+        </linearGradient>
+        <linearGradient id="g3" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#ffbcd8"/><stop offset="1" stop-color="#ff7faa"/>
+        </linearGradient>
+        <radialGradient id="gGlow">
+          <stop offset="0" stop-color="#ffca6e" stop-opacity=".85"/>
+          <stop offset=".55" stop-color="#ff9b5a" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#ff7f9e" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="gFlame" cx=".5" cy=".78" r=".72">
+          <stop offset="0" stop-color="#fffdf0"/>
+          <stop offset=".4" stop-color="#ffd76e"/>
+          <stop offset=".78" stop-color="#ff8a3d"/>
+          <stop offset="1" stop-color="#ff5a2e" stop-opacity=".9"/>
+        </radialGradient>
+      </defs>
+
+      <!-- 烛光 -->
+      <circle id="glow" cx="160" cy="46" r="62" fill="url(#gGlow)"/>
+      <!-- 火焰 -->
+      <path id="flame" d="M160 8 C176 32 186 42 181 52 C177 60 169 63 160 63 C151 63 143 60 139 52 C134 42 144 32 160 8 Z" fill="url(#gFlame)"/>
+      <!-- 蜡烛 -->
+      <rect x="149" y="58" width="22" height="72" rx="7" fill="url(#gC)"/>
+      <path d="M149 78 h22 M149 100 h22" stroke="#ff7f9e" stroke-width="4" opacity=".55" stroke-linecap="round"/>
+
+      <!-- 顶层 -->
+      <rect x="86" y="128" width="148" height="42" rx="10" fill="url(#g1)"/>
+      <path d="M86 148 q10 18 20 4 q10 18 20 2 q10 18 20 2 q10 18 20 2 q10 18 20 2 q10 18 20 2 v-26 H86 Z" fill="#fff6fb"/>
+      <!-- 中层 -->
+      <rect x="66" y="168" width="188" height="48" rx="12" fill="url(#g2)"/>
+      <path d="M66 190 q12 20 24 4 q12 20 24 4 q12 20 24 4 q12 20 24 4 q12 20 24 4 q12 20 24 4 q12 20 24 4 v-30 H66 Z" fill="#fff2f8"/>
+      <!-- 底层 -->
+      <rect x="46" y="214" width="228" height="54" rx="14" fill="url(#g3)"/>
+      <path d="M46 238 q14 22 28 4 q14 22 28 4 q14 22 28 4 q14 22 28 4 q14 22 28 4 q14 22 28 4 q14 22 28 4 v-34 H46 Z" fill="#ffeff7"/>
+      <g opacity=".35" fill="#fff">
+        <circle cx="82" cy="248" r="4"/><circle cx="128" cy="256" r="5"/>
+        <circle cx="180" cy="246" r="4"/><circle cx="228" cy="256" r="5"/>
+        <circle cx="264" cy="246" r="4"/>
+      </g>
+      <!-- 樱桃 -->
+      <circle cx="160" cy="118" r="11" fill="#ff4d6d"/>
+      <circle cx="156.5" cy="114" r="3.2" fill="#fff" opacity=".8"/>
+      <path d="M160 107 q6 -12 18 -12" stroke="#7defca" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- 盘子 -->
+      <ellipse cx="160" cy="276" rx="150" ry="16" fill="#2a1a4d"/>
+      <ellipse cx="160" cy="272" rx="150" ry="16" fill="#6b4fa3"/>
+      <ellipse cx="160" cy="270" rx="132" ry="12" fill="#8f6cc7" opacity=".7"/>
+    </svg>
+    <div class="wish" id="wish">✨ 愿望已经飞向宇宙，马上实现 ✨</div>
+    <div class="hint">点一下蛋糕吹蜡烛 · 双击名字可以改称呼</div>
+  </div>
+
+  <div class="card up d4" id="card">
+    <h3>🎁 给你的几行祝福</h3>
+    <p>愿你今年所有的期待，都变成如期而至的惊喜；<br>
+       愿你走的每一步，都有好运在旁边打灯；<br>
+       愿你被世界温柔以待，也永远有勇气做自己；<br>
+       别人盼的是周五，我盼的是你 —— 生日快乐。</p>
+    <div class="sign">—— 来自一个偷偷准备惊喜的人</div>
+  </div>
+
+  <div class="btns up d5">
+    <button class="btn" id="btnAll">🎇 全部特效来一遍</button>
+    <button class="btn ghost" id="btnSong">🎵 播放生日歌</button>
+  </div>
+</main>
+
+<div class="viz" id="viz"></div>
+
+<script>
+(function(){
+  "use strict";
+  var rand = function(a,b){ return a + Math.random()*(b-a); };
+  var pick = function(a){ return a[Math.floor(Math.random()*a.length)]; };
+  var TAU = Math.PI*2;
+
+  var bg = document.getElementById('bg'), bctx = bg.getContext('2d');
+  var fx = document.getElementById('fx'), fctx = fx.getContext('2d');
+  var layer = document.getElementById('layer');
+  var W=0, H=0;
+  var isCoarse = false;
+  try{ isCoarse = window.matchMedia('(pointer: coarse)').matches; }catch(e){}
+  var isMobile = isCoarse || Math.min(window.innerWidth, window.innerHeight) < 700;
+  var DPR = Math.min(window.devicePixelRatio||1, isMobile ? 2 : 2);
+  var MAX = isMobile ? 620 : 1400;
+
+  function resize(){
+    W = window.innerWidth; H = window.innerHeight;
+    [bg,fx].forEach(function(c){
+      c.width = Math.round(W*DPR); c.height = Math.round(H*DPR);
+      c.getContext('2d').setTransform(DPR,0,0,DPR,0,0);
+    });
+    makeStars();
+  }
+  window.addEventListener('resize', resize);
+  window.addEventListener('orientationchange', function(){ setTimeout(resize, 260); });
+
+  /* ==========================================================
+     特效 1：星空 + 流星
+     ========================================================== */
+  var stars=[], meteors=[];
+  function makeStars(){
+    stars=[];
+    var n = Math.round(Math.min(W*H/9000, isMobile?110:220));
+    for(var i=0;i<n;i++){
+      stars.push({x:Math.random()*W, y:Math.random()*H, r:rand(.4,1.5),
+        a:rand(.25,1), s:rand(.004,.02), p:Math.random()*TAU,
+        c:pick(['#ffffff','#ffe9f7','#cfe8ff','#fff0c9'])});
+    }
+  }
+  function drawSky(t){
+    bctx.clearRect(0,0,W,H);
+    for(var i=0;i<stars.length;i++){
+      var st=stars[i];
+      var tw = .55 + .45*Math.sin(t*st.s*100 + st.p);
+      bctx.globalAlpha = st.a*tw;
+      bctx.fillStyle = st.c;
+      bctx.beginPath(); bctx.arc(st.x, st.y, st.r, 0, TAU); bctx.fill();
+    }
+    bctx.globalAlpha=1;
+    for(var j=meteors.length-1;j>=0;j--){
+      var m=meteors[j];
+      m.x += m.vx; m.y += m.vy; m.life--;
+      if(m.life<=0){ meteors.splice(j,1); continue; }
+      var g=bctx.createLinearGradient(m.x,m.y,m.x-m.vx*m.len,m.y-m.vy*m.len);
+      g.addColorStop(0,'rgba(255,255,255,'+(m.life/m.max)+')');
+      g.addColorStop(1,'rgba(255,255,255,0)');
+      bctx.strokeStyle=g; bctx.lineWidth=2; bctx.lineCap='round';
+      bctx.beginPath(); bctx.moveTo(m.x,m.y);
+      bctx.lineTo(m.x-m.vx*m.len, m.y-m.vy*m.len); bctx.stroke();
+    }
+  }
+  function shootMeteor(){
+    var ang = rand(Math.PI*0.15, Math.PI*0.35);
+    var sp = rand(9,16);
+    meteors.push({x:rand(-100,W*0.8), y:rand(-60,H*0.35),
+      vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,
+      len:rand(14,30), life:70, max:70});
+  }
+
+  /* ==========================================================
+     特效 2-5：粒子系统（烟花 · 彩纸 · 星轨 · 涟漪）
+     ========================================================== */
+  var parts=[];
+  function add(p){ if(parts.length<MAX) parts.push(p); }
+
+  function firework(x,y){
+    var hue = Math.floor(rand(0,360));
+    var n = isMobile ? 46 : 72;
+    n += Math.floor(rand(0, isMobile?14:34));
+    for(var i=0;i<n;i++){
+      var a = (i/n)*TAU + rand(-.06,.06);
+      var sp = rand(2.2,7.2);
+      add({t:'spark',x:x,y:y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,
+        r:rand(1.4,3), hue:hue+rand(-24,24), life:rand(45,92), max:92, g:0.055, trail:.86});
+    }
+    add({t:'flash',x:x,y:y,r:6,life:14,max:14,hue:hue});
+    for(var k=0;k<(isMobile?8:14);k++){
+      add({t:'spark',x:x,y:y,vx:rand(-1.4,1.4),vy:rand(-1.4,1.4),
+        r:rand(2,4),hue:45,life:rand(60,110),max:110,g:.015,trail:.95});
+    }
+  }
+  function launchRocket(tx,ty){
+    var sx = tx + rand(-36,36);
+    add({t:'rocket', x:sx, y:H+10, vx:(tx-sx)/58, vy:(ty-(H+10))/58 - rand(0,.6),
+      tx:tx, ty:ty, life:58, max:58, hue:Math.floor(rand(0,360))});
+  }
+  function confettiBurst(n){
+    if(isMobile) n = Math.round(n*0.62);
+    for(var i=0;i<n;i++){
+      add({t:'confetti', x:rand(0,W), y:rand(-H*.6,-10),
+        vx:rand(-1.2,1.2), vy:rand(1.6,4.2), w:rand(6,12), h:rand(8,16),
+        rot:rand(0,TAU), vr:rand(-.16,.16), hue:Math.floor(rand(0,360)),
+        sway:rand(0,TAU), life:10000});
+    }
+  }
+  function ripple(x,y){
+    add({t:'ripple', x:x, y:y, r:4, vr:4.6, life:42, max:42,
+      hue:Math.floor(rand(180,330))});
+  }
+  function trailDot(x,y){
+    add({t:'spark', x:x, y:y, vx:rand(-.7,.7), vy:rand(-1.2,.2),
+      r:rand(1.2,3.2), hue:rand(280,345), life:rand(24,46), max:46, g:-0.012, trail:.9});
+  }
+  function buzz(ms){ if(navigator.vibrate){ try{ navigator.vibrate(ms); }catch(e){} } }
+
+  var trailOn = true, rippleOn = true, lastTrail = 0;
+  function pointerMove(x,y){
+    mouse.x=x; mouse.y=y;
+    if(trailOn && performance.now()-lastTrail>16){
+      lastTrail = performance.now();
+      trailDot(x,y);
+      if(!isMobile) trailDot(x,y);
+    }
+  }
+  var mouse={x:-999,y:-999};
+  window.addEventListener('mousemove', function(e){ pointerMove(e.clientX, e.clientY); });
+  window.addEventListener('touchmove', function(e){
+    var t=e.touches[0]; if(t) pointerMove(t.clientX, t.clientY);
+  }, {passive:true});
+  window.addEventListener('mousedown', function(e){
+    if(e.target.closest('.panel,.btn,.balloon,.name')) return;
+    if(rippleOn) ripple(e.clientX,e.clientY);
+    launchRocket(e.clientX, Math.max(60, e.clientY - rand(40,140)));
+  });
+  window.addEventListener('touchstart', function(e){
+    if(e.target.closest('.panel,.btn,.balloon,.name')) return;
+    var t=e.touches[0]; if(!t) return;
+    if(rippleOn) ripple(t.clientX,t.clientY);
+    launchRocket(t.clientX, Math.max(60, t.clientY - rand(40,140)));
+  }, {passive:true});
+
+  function drawParts(){
+    fctx.clearRect(0,0,W,H);
+    fctx.globalCompositeOperation='lighter';
+    for(var i=parts.length-1;i>=0;i--){
+      var p=parts[i];
+      p.life--;
+
+      if(p.t==='rocket'){
+        p.x+=p.vx; p.y+=p.vy; p.vy+=0.06;
+        fctx.strokeStyle='hsla('+p.hue+',100%,72%,1)';
+        fctx.lineWidth=3; fctx.lineCap='round';
+        fctx.beginPath(); fctx.moveTo(p.x,p.y);
+        fctx.lineTo(p.x-p.vx*3, p.y-p.vy*3); fctx.stroke();
+        if(p.life<=0 || p.y<=p.ty){ firework(p.x,p.y); parts.splice(i,1); }
+        continue;
+      }
+      if(p.t==='spark'){
+        p.x+=p.vx; p.y+=p.vy; p.vy+=p.g; p.vx*=p.trail; p.vy*=p.trail;
+        var al=Math.max(0, p.life/p.max);
+        fctx.fillStyle='hsla('+p.hue+',100%,'+(60+30*al)+'%,'+al+')';
+        fctx.beginPath(); fctx.arc(p.x,p.y,p.r*(0.4+0.6*al),0,TAU); fctx.fill();
+        if(p.life<=0) parts.splice(i,1);
+        continue;
+      }
+      if(p.t==='flash'){
+        var a2=p.life/p.max;
+        var rr=p.r+42*(1-a2);
+        var g2=fctx.createRadialGradient(p.x,p.y,0,p.x,p.y,rr);
+        g2.addColorStop(0,'hsla('+p.hue+',100%,86%,'+a2+')');
+        g2.addColorStop(1,'hsla('+p.hue+',100%,60%,0)');
+        fctx.fillStyle=g2; fctx.beginPath(); fctx.arc(p.x,p.y,rr,0,TAU); fctx.fill();
+        if(p.life<=0) parts.splice(i,1);
+        continue;
+      }
+      if(p.t==='ripple'){
+        p.r+=p.vr; p.vr*=0.94;
+        var a3=p.life/p.max;
+        fctx.strokeStyle='hsla('+p.hue+',100%,78%,'+(a3*0.75)+')';
+        fctx.lineWidth=2.2*a3+0.4;
+        fctx.beginPath(); fctx.arc(p.x,p.y,p.r,0,TAU); fctx.stroke();
+        if(p.life<=0) parts.splice(i,1);
+        continue;
+      }
+      if(p.t==='confetti'){
+        p.sway+=0.06; p.x+=p.vx+Math.sin(p.sway)*1.1; p.y+=p.vy; p.rot+=p.vr;
+        if(p.y>H+30){ p.y=-20; p.x=rand(0,W); }
+        fctx.globalCompositeOperation='source-over';
+        fctx.save(); fctx.translate(p.x,p.y); fctx.rotate(p.rot);
+        fctx.fillStyle='hsl('+p.hue+',92%,'+(58+8*Math.sin(p.sway))+'%)';
+        fctx.fillRect(-p.w/2,-p.h/2,p.w,p.h*(0.35+0.65*Math.abs(Math.cos(p.sway))));
+        fctx.restore();
+        fctx.globalCompositeOperation='lighter';
+      }
+    }
+    fctx.globalCompositeOperation='source-over';
+    fctx.globalAlpha=1;
+  }
+
+  function loop(t){
+    drawSky(t/1000);
+    drawParts();
+    requestAnimationFrame(loop);
+  }
+
+  /* ==========================================================
+     特效 6：气球（点击爆破 + 震动反馈）
+     ========================================================== */
+  var balloonColors=['#ff7f9e','#ffc861','#7defca','#b79bff','#8dffb8','#ffa06e','#ff8fd0'];
+  function releaseBalloons(n){
+    if(isMobile) n = Math.min(n, 6);
+    for(var i=0;i<n;i++){
+      (function(i){
+        setTimeout(function(){
+          var b=document.createElement('div');
+          b.className='balloon';
+          var c=pick(balloonColors);
+          b.style.background='radial-gradient(circle at 32% 26%, rgba(255,255,255,.75), '+c+' 60%, '+c+')';
+          var size=rand(.8,1.2);
+          b.style.width=(52*size)+'px';
+          b.style.height=(66*size)+'px';
+          b.style.left=rand(3,90)+'vw';
+          b.style.bottom='-120px';
+          var dur=rand(9,15);
+          b.style.transition='bottom '+dur+'s linear';
+          layer.appendChild(b);
+          requestAnimationFrame(function(){ b.style.bottom=(H+140)+'px'; });
+          b.addEventListener('click', function(){
+            b.classList.add('burst');
+            buzz(14);
+            burstShards(b,c);
+            setTimeout(function(){ if(b.parentNode) b.remove(); }, 280);
+          });
+          setTimeout(function(){ if(b.parentNode) b.remove(); }, dur*1000+600);
+        }, i*170);
+      })(i);
+    }
+  }
+  function burstShards(el,c){
+    var r=el.getBoundingClientRect();
+    for(var i=0;i<10;i++){
+      var s=document.createElement('div');
+      s.className='shard';
+      s.style.background=c;
+      s.style.left=(r.left+r.width/2)+'px';
+      s.style.top=(r.top+r.height/2)+'px';
+      s.style.transition='transform .6s cubic-bezier(.2,.8,.3,1), opacity .6s';
+      layer.appendChild(s);
+      (function(s){
+        requestAnimationFrame(function(){
+          var a=rand(0,TAU), d=rand(50,140);
+          s.style.transform='translate('+Math.cos(a)*d+'px,'+Math.sin(a)*d+'px) rotate('+rand(0,720)+'deg) scale(.4)';
+          s.style.opacity='0';
+        });
+        setTimeout(function(){ if(s.parentNode) s.remove(); }, 700);
+      })(s);
+    }
+  }
+
+  /* ==========================================================
+     特效 7：爱心飘浮
+     ========================================================== */
+  var heartChars=['💗','💖','💕','❤️','✨','🌟','🎈'];
+  function floatHearts(n){
+    if(isMobile) n = Math.min(n, 10);
+    for(var i=0;i<n;i++){
+      (function(i){
+        setTimeout(function(){
+          var h=document.createElement('div');
+          h.className='heart';
+          h.textContent=pick(heartChars);
+          h.style.left=rand(2,92)+'vw';
+          h.style.top=(H+20)+'px';
+          h.style.fontSize=rand(16,32)+'px';
+          h.style.setProperty('--r', rand(-60,60)+'deg');
+          h.style.animationDuration=rand(5,9)+'s';
+          layer.appendChild(h);
+          setTimeout(function(){ if(h.parentNode) h.remove(); }, 9500);
+        }, i*130);
+      })(i);
+    }
+  }
+
+  /* ==========================================================
+     特效 8：打字机祝福
+     ========================================================== */
+  var wishes=[
+    '周五快乐！今天也是你的生日快乐 🎉',
+    '愿你所有的愿望都实现 ✨',
+    '新的一岁，继续闪闪发光 🌟',
+    '全世界都在等周五，而今天只属于你 👑',
+    '离周末最近的人，运气一定最好 🍀',
+    '祝你快乐，不止今天，不止周五 🎂'
+  ];
+  var typeEl=document.getElementById('typeText'), wi=0, ci=0, typing=null;
+  function typeNext(){
+    if(typing) clearTimeout(typing);
+    var text=wishes[wi%wishes.length]; wi++; ci=0; typeEl.textContent='';
+    (function step(){
+      if(ci<=text.length){
+        typeEl.textContent = text.slice(0,ci); ci++;
+        typing = setTimeout(step, 85);
+      }else{
+        typing = setTimeout(typeNext, 2600);
+      }
+    })();
+  }
+
+  /* ==========================================================
+     特效 9：吹灭蜡烛 + 烟雾
+     ========================================================== */
+  var flame=document.getElementById('flame'), glow=document.getElementById('glow'),
+      wish=document.getElementById('wish'), blown=false, taps=0, tapTimer=null;
+  var cakeZone=document.getElementById('cakeZone');
+  function blowCandle(){
+    if(blown){                       // 再点一次重新点燃
+      blown=false; taps=0;
+      flame.classList.remove('out'); glow.classList.remove('out');
+      wish.classList.remove('on');
+      return;
+    }
+    blown=true;
+    flame.classList.add('out'); glow.classList.add('out');
+    wish.classList.add('on');
+    buzz(18);
+    var rect=cakeZone.getBoundingClientRect();
+    var bx=rect.left+rect.width/2, by=rect.top+rect.height*0.22;
+    for(var i=0;i<5;i++){
+      (function(i){
+        setTimeout(function(){
+          var s=document.createElement('div');
+          var sz=rand(10,20);
+          s.style.cssText='position:fixed;left:'+bx+'px;top:'+by+'px;width:'+sz+'px;height:'+sz+
+            'px;border-radius:50%;background:rgba(238,232,255,.5);filter:blur(7px);'+
+            'pointer-events:none;z-index:45;transition:transform 1.9s ease-out, opacity 1.9s;';
+          document.body.appendChild(s);
+          requestAnimationFrame(function(){
+            s.style.transform='translate('+rand(-40,40)+'px,'+rand(-150,-80)+'px) scale(2.6)';
+            s.style.opacity='0';
+          });
+          setTimeout(function(){ if(s.parentNode) s.remove(); }, 2100);
+        }, i*230);
+      })(i);
+    }
+    setTimeout(function(){ firework(W/2, H*0.3); }, 240);
+    setTimeout(function(){ firework(W*0.28, H*0.26); }, 480);
+    setTimeout(function(){ firework(W*0.72, H*0.28); }, 720);
+    floatHearts(10);
+    releaseBalloons(4);
+  }
+  cakeZone.addEventListener('click', function(){
+    taps++;
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(function(){ taps = 0; }, 600);
+    if(taps >= 3){                    // 彩蛋：连点三下超级烟花
+      taps = 0;
+      for(var i=0;i<8;i++){
+        (function(i){ setTimeout(function(){ firework(rand(W*0.1,W*0.9), rand(H*0.1,H*0.5)); }, i*130); })(i);
+      }
+      return;
+    }
+    blowCandle();
+  });
+
+  /* ==========================================================
+     特效 10：Web Audio 生日歌 + 频谱律动条
+     ========================================================== */
+  var viz=document.getElementById('viz'), BARS=isMobile?22:32, bars=[];
+  for(var bi=0; bi<BARS; bi++){ var bb=document.createElement('i'); viz.appendChild(bb); bars.push(bb); }
+
+  var actx=null, analyser=null, playing=false, songTimer=null, vizRAF=0;
+  function buildAudio(){
+    if(actx) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    try{
+      actx = new AC();
+      analyser = actx.createAnalyser();
+      analyser.fftSize = 128;
+      analyser.smoothingTimeConstant = .8;
+      analyser.connect(actx.destination);
+    }catch(e){ actx = null; }
+  }
+  var N={G4:392,A4:440,B4:494,C5:523,D5:587,E5:659,F5:698,G5:784};
+  var MELODY=[
+    [N.G4,.5],[N.G4,.5],[N.A4,1],[N.G4,1],[N.C5,1],[N.B4,2],
+    [N.G4,.5],[N.G4,.5],[N.A4,1],[N.G4,1],[N.D5,1],[N.C5,2],
+    [N.G4,.5],[N.G4,.5],[N.G5,1],[N.E5,1],[N.C5,1],[N.B4,1],[N.A4,2],
+    [N.F5,.5],[N.F5,.5],[N.E5,1],[N.C5,1],[N.D5,1],[N.C5,2.5]
+  ];
+  function note(freq, beats, start){
+    var o=actx.createOscillator(), g=actx.createGain();
+    o.type='triangle'; o.frequency.value=freq;
+    var dur=beats*0.34;
+    g.gain.setValueAtTime(0, start);
+    g.gain.linearRampToValueAtTime(0.26, start+0.02);
+    g.gain.exponentialRampToValueAtTime(0.001, start+dur);
+    o.connect(g); g.connect(analyser);
+    o.start(start); o.stop(start+dur+0.05);
+  }
+  function playSong(){
+    buildAudio();
+    if(!actx){ alert('当前浏览器不支持 Web Audio'); return; }
+    if(actx.state === 'suspended'){ try{ actx.resume(); }catch(e){} }
+    var t = actx.currentTime + 0.1;
+    for(var i=0;i<MELODY.length;i++){
+      note(MELODY[i][0], MELODY[i][1], t);
+      t += MELODY[i][1]*0.34;
+    }
+    var total = (t - actx.currentTime)*1000 + 400;
+    playing = true;
+    viz.classList.add('on');
+    setBtn('song', true);
+    var iv = setInterval(function(){
+      firework(rand(W*0.15, W*0.85), rand(H*0.12, H*0.5));
+    }, isMobile ? 1300 : 900);
+    songTimer = setTimeout(function(){
+      clearInterval(iv);
+      playing = false;
+      viz.classList.remove('on');
+      setBtn('song', false);
+    }, total);
+    vizLoop();
+  }
+  function stopSong(){
+    playing = false;
+    viz.classList.remove('on');
+    clearTimeout(songTimer);
+    setBtn('song', false);
+    if(actx){ try{ actx.suspend(); }catch(e){} }
+  }
+  function vizLoop(){
+    if(!analyser) return;
+    var data = new Uint8Array(analyser.frequencyBinCount);
+    (function frame(){
+      if(!playing){
+        for(var k=0;k<bars.length;k++) bars[k].style.height='5px';
+        return;
+      }
+      analyser.getByteFrequencyData(data);
+      for(var i=0;i<bars.length;i++){
+        var v = data[i*2] || 0;
+        bars[i].style.height = (5 + v/255*(isMobile?38:56)) + 'px';
+      }
+      requestAnimationFrame(frame);
+    })();
+  }
+
+  /* ==========================================================
+     控制面板
+     ========================================================== */
+  var panel=document.getElementById('panel'), panelArrow=document.getElementById('panelArrow'), btnMap={};
+  Array.prototype.forEach.call(document.querySelectorAll('.fx-btn'), function(b){ btnMap[b.dataset.fx]=b; });
+  function setBtn(key, on){ if(btnMap[key]) btnMap[key].classList.toggle('on', !!on); }
+
+  var actions={
+    firework:function(){
+      var c = isMobile?2:3;
+      for(var i=0;i<c;i++) setTimeout(function(){ firework(rand(W*0.15,W*0.85), rand(H*0.12,H*0.5)); }, i*220);
+    },
+    confetti:function(){ confettiBurst(150); },
+    meteor:function(){ for(var i=0;i<3;i++) setTimeout(shootMeteor, i*300); },
+    trail:function(){ trailOn=!trailOn; setBtn('trail', trailOn); },
+    ripple:function(){ rippleOn=!rippleOn; setBtn('ripple', rippleOn); },
+    balloon:function(){ releaseBalloons(8); },
+    heart:function(){ floatHearts(14); },
+    type:function(){ typeNext(); },
+    candle:function(){ blowCandle(); },
+    song:function(){ playing ? stopSong() : playSong(); }
+  };
+  document.getElementById('panelBody').addEventListener('click', function(e){
+    var b = e.target.closest('.fx-btn');
+    if(!b) return;
+    var fn = actions[b.dataset.fx];
+    if(fn) fn();
+  });
+  document.getElementById('panelHead').addEventListener('click', function(){
+    panel.classList.toggle('min');
+    panelArrow.textContent = panel.classList.contains('min') ? '+' : '−';
+  });
+
+  document.getElementById('btnAll').addEventListener('click', function(){
+    actions.firework(); actions.confetti(); actions.meteor();
+    actions.balloon(); actions.heart();
+    if(!playing) playSong();
+  });
+  document.getElementById('btnSong').addEventListener('click', function(){
+    playing ? stopSong() : playSong();
+  });
+
+  setBtn('trail', true);
+  setBtn('ripple', true);
+
+  /* 贺卡 3D 视差（仅桌面） */
+  var card=document.getElementById('card');
+  if(!isMobile){
+    document.querySelector('.wrap').addEventListener('mousemove', function(e){
+      var r=card.getBoundingClientRect();
+      var cx=r.left+r.width/2, cy=r.top+r.height/2;
+      var dx=(e.clientX-cx)/(window.innerWidth/2), dy=(e.clientY-cy)/(window.innerHeight/2);
+      card.style.transform='perspective(900px) rotateY('+(dx*6)+'deg) rotateX('+(-dy*6)+'deg)';
+    });
+  }
+
+  /* 标题逐字入场 */
+  (function(){
+    var t=document.getElementById('title'), s=t.textContent, html='';
+    for(var i=0;i<s.length;i++){
+      var ch = s[i]===' ' ? '\u00A0' : s[i];
+      var d = (0.15 + i*0.075).toFixed(2);
+      html += '<span style="animation-delay:'+d+'s">'+ch+'</span>';
+    }
+    t.innerHTML = html;
+  })();
+
+  /* 空格键大烟花 */
+  window.addEventListener('keydown', function(e){
+    if(e.code === 'Space' && e.target !== document.getElementById('name')){
+      e.preventDefault();
+      for(var i=0;i<5;i++){
+        setTimeout(function(){ firework(rand(W*0.1,W*0.9), rand(H*0.1,H*0.45)); }, i*150);
+      }
+    }
+  });
+
+  /* 切到后台时暂停绘制，省电 */
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden){
+      parts.length = 0;
+      meteors.length = 0;
+    }
+  });
+
+  /* ---------- 启动 ---------- */
+  if(isMobile) { panel.classList.add('min'); panelArrow.textContent = '+'; }
+  resize();
+  requestAnimationFrame(loop);
+  setTimeout(typeNext, 700);
+  setTimeout(function(){ confettiBurst(130); }, 350);
+  setTimeout(function(){ releaseBalloons(isMobile?4:7); }, 1000);
+  setTimeout(function(){ floatHearts(9); }, 1500);
+  (function auto(){
+    setTimeout(function(){
+      firework(rand(W*0.15, W*0.85), rand(H*0.12, H*0.48));
+      if(Math.random() < 0.35) shootMeteor();
+      auto();
+    }, rand(2400, 4400));
+  })();
+})();
+</script>
+</body>
+</html>
